@@ -107,6 +107,12 @@ export function ImageComparisonImage({
           draggable={false} />
         
       </div>
+
+      <div className={`absolute top-4 ${isLeft ? 'left-4' : 'right-4'} pointer-events-none`}>
+        <div className="bg-zinc-900/80 backdrop-blur-md text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-lg border border-white/10 uppercase tracking-wider">
+          {isLeft ? 'Official Website' : 'Redesign'}
+        </div>
+      </div>
     </div>);
 
 }
