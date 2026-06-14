@@ -4,7 +4,8 @@ import React, {
   useRef,
   Children,
   cloneElement,
-  isValidElement } from
+  isValidElement,
+  useCallback } from
 'react';
 import { GripVertical } from 'lucide-react';
 interface ImageComparisonProps {
@@ -15,43 +16,35 @@ export function ImageComparison({ className, children }: ImageComparisonProps) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const handleMove = (clientX: number) => {
+
+  const handleMove = useCallback((clientX: number) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
     const percent = Math.max(0, Math.min(x / rect.width * 100, 100));
     setSliderPosition(percent);
-  };
-  const handleMouseMove = (e: MouseEvent) => {
-    if (!isDragging) return;
-    handleMove(e.clientX);
-  };
-  const handleTouchMove = (e: TouchEvent) => {
-    if (!isDragging) return;
-    handleMove(e.touches[0].clientX);
-  };
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  }, []);
+
   useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      window.addEventListener('touchmove', handleTouchMove);
-      window.addEventListener('touchend', handleMouseUp);
-    } else {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleMouseUp);
-    }
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => handleMove(e.clientX);
+    const handleTouchMove = (e: TouchEvent) => handleMove(e.touches[0].clientX);
+    const handleMouseUp = () => setIsDragging(false);
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleMouseUp);
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleMouseUp);
     };
-  }, [isDragging]);
+  }, [isDragging, handleMove]);
+
   return (
     <div
       ref={containerRef}
@@ -67,7 +60,7 @@ export function ImageComparison({ className, children }: ImageComparisonProps) {
       
       {Children.map(children, (child) => {
         if (isValidElement(child)) {
-          return cloneElement(child as React.ReactElement<any>, {
+          return cloneElement(child as React.ReactElement<{ sliderPosition?: number; isDragging?: boolean }>, {
             sliderPosition,
             isDragging
           });
